@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📕 小红书发帖模板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            gap: 40px;
+            flex-direction: row;
+            @media (max-width: 1024px) {
+                flex-direction: column;
+            }
+        }
+        .settings-panel {
+            flex: 1;
+            max-width: 800px;
+            @media (max-width: 1024px) {
+                max-width: 100%;
+            }
+        }
+        .preview-panel {
+            flex: 1;
+            position: sticky;
+            top: 20px;
+            height: calc(100vh - 40px);  /* 减去上下padding的高度 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 16px;
+            padding: 20px;
+            @media (max-width: 1024px) {
+                position: relative;
+                top: 0;
+                height: auto;
+            }
+        }
+        .input, .textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 4px;
+        }
+        .button {
+            padding: 8px 16px;
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .button:hover {
+            background-color: #f8f9fa;
+        }
+        .help-text {
+            font-size: 12px;
+            color: #64748b;
+        }
+        .char-count {
+            font-size: 12px;
+            color: #64748b;
+            text-align: right;
+            margin-top: 4px;
+        }
+        .char-count.warning {
+            color: #f59e0b;
+        }
+        .char-count.error {
+            color: #ef4444;
+        }
+        .settings-label {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .settings-sublabel {
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .poster {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            padding: 0;
+            width: 450px;  /* 缩小预览尺寸 */
+            height: 600px;  /* 缩小预览尺寸 */
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            position: relative;
+            @media (max-width: 1024px) {
+                width: 270px;  /* 移动端尺寸也相应调整 */
+                height: 360px;
+            }
+        }
+        .poster-content {
+            padding: 24px;  /* 页眉到顶部边缘的间距改为 24px */
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .poster-header {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 16px;  /* Mini header 到 title 的间距改为 16px */
+            flex-shrink: 0;
+        }
+        .poster-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;  /* title 到 image 的间距为 16px */
+            flex-shrink: 0;
+        }
+        .poster-image {
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 16px;  /* image 到 body 的间距为 16px */
+            background-color: #f8f9fa;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        .poster-image.empty {
+            background-color: #f8f9fa;
+        }
+        .poster.dark .poster-image.empty {
+            background-color: #2d2d2d;
+        }
+        .poster-image.empty img {
+            opacity: 0;
+            visibility: hidden;
+            position: absolute;
+            pointer-events: none;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+            user-select: none;
+            alt: "";
+        }
+        .poster-image.empty::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 48px;
+            height: 48px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%2364748b' %3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z' /%3E%3C/svg%3E");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            z-index: 1;
+        }
+        .poster.dark .poster-image.empty::before {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='%23a1a1aa' %3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z' /%3E%3C/svg%3E");
+        }
+        .poster-image.empty > img {
+            display: none;
+        }
+        img[src=""] {
+            opacity: 0;
+        }
+        .poster-body {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 16px;  /* body 到 footer 的间距改为 16px */
+            overflow-y: auto;
+        }
+        .poster-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 24px;  /* 页脚到底部边缘的间距改为 24px */
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #64748b;
+            border-radius: 0 0 12px 12px;
+        }
+        /* 主题相关样式 */
+        .poster.dark {
+            background: #1a1a1a;
+            color: white;
+        }
+        .poster.dark .poster-header,
+        .poster.dark .poster-footer {
+            color: #a1a1aa;
+        }
+        .theme-toggle {
+            padding: 8px;
+            width: 36px;
+            height: 36px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .theme-toggle:hover {
+            background: #f8f9fa;
+        }
+        .theme-toggle.dark {
+            background: #1a1a1a;
+            color: white;
+            border-color: #2d2d2d;
+        }
+        .theme-toggle.dark:hover {
+            background: #2d2d2d;
+        }
+        .poster-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            width: 100%;
+        }
+        .download-button {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .download-button:hover {
+            background: linear-gradient(135deg, #4338CA 0%, #0891B2 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+        }
+        .color-picker {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 42px;
+            height: 42px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+        }
+        .color-picker::-webkit-color-swatch {
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+        .color-picker::-moz-color-swatch {
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+        .opacity-slider {
+            width: 80px;
+            height: 6px;
+            -webkit-appearance: none;
+            background: #e2e8f0;
+            border-radius: 3px;
+            outline: none;
+        }
+        .opacity-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #64748b;
+            cursor: pointer;
+        }
+        .opacity-slider::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #64748b;
+            cursor: pointer;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧设置面板 -->
+        <div class="settings-panel">
+            <h1 class="text-3xl font-bold mb-8">📕 小红书发帖模板</h1>
+
+            <div class="max-w-2xl space-y-5">
+                <div class="space-y-1">
+                    <h2 class="settings-label">Mini header</h2>
+                    <input 
+                        type="text" 
+                        class="input" 
+                        value="分享一个可爱的熊猫头像" 
+                        id="miniHeader" 
+                        oninput="updatePoster()"
+                    >
+                </div>
+
+                <div class="space-y-1">
+                    <h2 class="settings-label">Title</h2>
+                    <input 
+                        type="text" 
+                        class="input" 
+                        value="黑白配色的简约风格熊猫插画设计"
+                        id="title" 
+                        oninput="updatePoster()"
+                    >
+                </div>
+
+                <div class="space-y-1">
+                    <h2 class="settings-label">Image</h2>
+                    <div class="flex items-center space-x-4">
+                        <button class="button" onclick="document.getElementById('image-upload').click()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                            </svg>
+                            Upload an image
+                        </button>
+                        <input type="file" id="image-upload" accept="image/*" style="display: none" onchange="handleImageUpload(event)">
+                    </div>
+                    <div id="image-preview" class="mt-2"></div>
+                </div>
+
+                <div class="space-y-1">
+                    <h2 class="settings-label">Body</h2>
+                    <textarea 
+                        class="textarea min-h-[100px]" 
+                        style="resize: none" 
+                        id="body" 
+                        oninput="updatePoster()"
+                    >这是一个超级可爱的熊猫头像设计，采用简约的黑白配色，完美展现了熊猫的萌态。圆润的线条设计让整体看起来非常和谐，是一个非常适合用作头像或者logo的作品。</textarea>
+                </div>
+
+                <div class="space-y-2">
+                    <h2 class="settings-label">Footer</h2>
+                    <div class="space-y-1">
+                        <h3 class="settings-sublabel">Left Footer</h3>
+                        <input type="text" class="input" value="设计分享" id="leftFooter" oninput="updatePoster()">
+                    </div>
+                    <div class="space-y-1">
+                        <h3 class="settings-sublabel">Right Footer</h3>
+                        <input type="text" class="input" value="by 小红书博主 iamkoko" id="rightFooter" oninput="updatePoster()">
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="settings-label">Color Settings</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="settings-sublabel">Background Color</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="color" id="bgColor" class="color-picker" value="#FFFFFF" onchange="updateColors()">
+                                <input type="text" class="input w-24" id="bgColorText" value="#FFFFFF" onchange="updateColorFromText('bgColor')">
+                                <div class="flex items-center space-x-1">
+                                    <input type="range" min="0" max="100" value="100" class="opacity-slider" id="bgOpacity" oninput="updateColors()" disabled style="opacity: 0.5; cursor: not-allowed;">
+                                    <span class="text-xs text-gray-500" id="bgOpacityText">100%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="settings-sublabel">Title Color</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="color" id="titleColor" class="color-picker" value="#000000" onchange="updateColors()">
+                                <input type="text" class="input w-24" id="titleColorText" value="#000000" onchange="updateColorFromText('titleColor')">
+                                <div class="flex items-center space-x-1">
+                                    <input type="range" min="0" max="100" value="100" class="opacity-slider" id="titleOpacity" oninput="updateColors()">
+                                    <span class="text-xs text-gray-500" id="titleOpacityText">100%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="settings-sublabel">Body Color</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="color" id="bodyColor" class="color-picker" value="#000000" onchange="updateColors()">
+                                <input type="text" class="input w-24" id="bodyColorText" value="#000000" onchange="updateColorFromText('bodyColor')">
+                                <div class="flex items-center space-x-1">
+                                    <input type="range" min="0" max="100" value="100" class="opacity-slider" id="bodyOpacity" oninput="updateColors()">
+                                    <span class="text-xs text-gray-500" id="bodyOpacityText">100%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="settings-sublabel">Header & Footer Color</label>
+                            <div class="flex items-center space-x-2">
+                                <input type="color" id="secondaryColor" class="color-picker" value="#64748B" onchange="updateColors()">
+                                <input type="text" class="input w-24" id="secondaryColorText" value="#64748B" onchange="updateColorFromText('secondaryColor')">
+                                <div class="flex items-center space-x-1">
+                                    <input type="range" min="0" max="100" value="100" class="opacity-slider" id="secondaryOpacity" oninput="updateColors()">
+                                    <span class="text-xs text-gray-500" id="secondaryOpacityText">100%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧预览面板 -->
+        <div class="preview-panel">
+            <div class="poster dark">
+                <div class="poster-content">
+                    <div class="poster-header" id="posterHeader">分享一个可爱的熊猫头像</div>
+                    <div class="poster-title" id="posterTitle">黑白配色的简约风格熊猫插画设计</div>
+                    <div class="poster-image empty" id="posterImage"></div>
+                    <div class="poster-body" id="posterBody">这是一个超级可爱的熊猫头像设计，采用简约的黑白配色，完美展现了熊猫的萌态。圆润的线条设计让整体看起来非常和谐，是一个非常适合用作头像或者logo的作品。</div>
+                </div>
+                <div class="poster-footer">
+                    <span id="posterLeftFooter">设计分享</span>
+                    <span id="posterRightFooter">by 小红书博主 iamkoko</span>
+                </div>
+            </div>
+            <div class="poster-actions">
+                <button class="theme-toggle dark" onclick="toggleTheme()">
+                    <svg class="dark-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                        <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+                    </svg>
+                    <svg class="light-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"/>
+                        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                    </svg>
+                </button>
+                <button class="download-button" onclick="downloadPoster()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                    <span>Download Poster</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function downloadPoster() {
+            const poster = document.querySelector('.poster');
+            
+            // 1. 显示加载提示
+            const loadingToast = createLoadingToast('正在生成海报...');
+            
+            try {
+                // 2. 创建一个不可见的容器
+                const container = document.createElement('div');
+                container.style.cssText = `
+                    position: absolute;
+                    left: -9999px;
+                    top: -9999px;
+                    width: 1200px;
+                    height: 1600px;
+                `;
+                
+                document.body.appendChild(container);
+                
+                // 3. 克隆海报
+                const posterClone = poster.cloneNode(true);
+                const bgColorRgba = poster.style.background || (poster.classList.contains('dark') ? '#1a1a1a' : 'white');
+                posterClone.style.cssText = `
+                    width: 1200px;
+                    height: 1600px;
+                    background: ${bgColorRgba};
+                    position: relative;
+                    display: block;
+                    margin: 0;
+                    padding: 0;
+                    border-radius: 24px;
+                `;
+                
+                container.appendChild(posterClone);
+
+                // 4. 调整克隆元素的样式比例
+                const content = posterClone.querySelector('.poster-content');
+                content.style.cssText = `
+                    padding: 64px;
+                    height: calc(100% - 180px);
+                    display: flex;
+                    flex-direction: column;
+                `;
+
+                const header = posterClone.querySelector('.poster-header');
+                header.style.cssText = `
+                    font-size: 36px;
+                    color: ${poster.querySelector('.poster-header').style.color || (poster.classList.contains('dark') ? '#a1a1aa' : '#64748b')};
+                    margin-bottom: 48px;
+                `;
+
+                const title = posterClone.querySelector('.poster-title');
+                title.style.cssText = `
+                    font-size: 64px;
+                    font-weight: 600;
+                    margin-bottom: 48px;
+                    line-height: 1.4;
+                    color: ${poster.querySelector('.poster-title').style.color || (poster.classList.contains('dark') ? 'white' : 'black')};
+                `;
+
+                const image = posterClone.querySelector('.poster-image');
+                if (image) {
+                    // 保持原有的背景图片
+                    const originalImage = poster.querySelector('.poster-image');
+                    image.style.cssText = `
+                        width: 100%;
+                        aspect-ratio: 16/9;
+                        background-image: ${originalImage.style.backgroundImage};
+                        background-size: cover;
+                        background-position: center;
+                        border-radius: 16px;
+                        margin-bottom: 48px;
+                        background-color: ${poster.classList.contains('dark') ? '#2d2d2d' : '#f8f9fa'};
+                    `;
+                    
+                    // 如果是空状态，确保显示占位图标
+                    if (originalImage.classList.contains('empty')) {
+                        image.classList.add('empty');
+                    }
+                    
+                    // 等待背景图片加载（如果有的话）
+                    if (originalImage.style.backgroundImage && !originalImage.classList.contains('empty')) {
+                        const bgUrl = originalImage.style.backgroundImage.slice(4, -1).replace(/"/g, "");
+                        await new Promise((resolve, reject) => {
+                            const img = new Image();
+                            img.onload = resolve;
+                            img.onerror = reject;
+                            img.src = bgUrl;
+                        });
+                    }
+                }
+
+                const body = posterClone.querySelector('.poster-body');
+                body.style.cssText = `
+                    font-size: 42px;
+                    line-height: 1.6;
+                    color: ${poster.querySelector('.poster-body').style.color || (poster.classList.contains('dark') ? 'white' : 'black')};
+                    margin-bottom: 48px;
+                `;
+
+                const footer = posterClone.querySelector('.poster-footer');
+                footer.style.cssText = `
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    padding: 64px;
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 32px;
+                    color: ${poster.querySelector('.poster-footer').style.color || (poster.classList.contains('dark') ? '#a1a1aa' : '#64748b')};
+                    border-radius: 0 0 24px 24px;
+                `;
+                
+                // 5. 使用 html2canvas，增加 scale 参数
+                const canvas = await html2canvas(posterClone, {
+                    scale: 2.67,  // 1200/450 ≈ 2.67，保持与预览版本相同的比例
+                    useCORS: true,
+                    allowTaint: false,
+                    backgroundColor: poster.classList.contains('dark') ? '#1a1a1a' : 'white',
+                    logging: true,
+                    width: 1200,
+                    height: 1600,
+                    imageTimeout: 0,
+                    onclone: (clonedDoc) => {
+                        console.log('克隆文档成功');
+                        const clonedPoster = clonedDoc.querySelector('.poster');
+                        console.log('克隆海报尺寸:', {
+                            width: clonedPoster.offsetWidth,
+                            height: clonedPoster.offsetHeight
+                        });
+                    }
+                });
+                
+                // 6. 创建下载链接
+                const link = document.createElement('a');
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                link.download = `poster-${timestamp}.png`;
+                
+                try {
+                    link.href = canvas.toDataURL('image/png', 1.0);
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    updateLoadingToast(loadingToast, '海报已保存到下载文件夹', 'success');
+                } catch (dataUrlError) {
+                    console.error('转换canvas到数据URL失败:', dataUrlError);
+                    updateLoadingToast(loadingToast, '生成海报失败，请确保图片来自相同域名', 'error');
+                }
+            } catch (error) {
+                console.error('生成海报失败:', error);
+                updateLoadingToast(loadingToast, '生成海报失败，请重试', 'error');
+            } finally {
+                document.body.removeChild(container);
+            }
+        }
+
+        // 创建加载提示
+        function createLoadingToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                font-size: 14px;
+                z-index: 1000;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            return toast;
+        }
+
+        // 更新加载提示
+        function updateLoadingToast(toast, message, type) {
+            toast.textContent = message;
+            toast.style.background = type === 'success' 
+                ? 'rgba(22, 163, 74, 0.8)' 
+                : 'rgba(220, 38, 38, 0.8)';
+            
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 2000);
+        }
+
+        function toggleTheme() {
+            const poster = document.querySelector('.poster');
+            const themeToggle = document.querySelector('.theme-toggle');
+            const darkIcon = document.querySelector('.dark-icon');
+            const lightIcon = document.querySelector('.light-icon');
+            
+            poster.classList.toggle('dark');
+            themeToggle.classList.toggle('dark');
+            
+            // 切换图标显示
+            if (poster.classList.contains('dark')) {
+                darkIcon.style.display = 'block';
+                lightIcon.style.display = 'none';
+                document.getElementById('bgColor').value = '#1A1A1A';
+                document.getElementById('titleColor').value = '#FFFFFF';
+                document.getElementById('secondaryColor').value = '#A1A1AA';
+                document.getElementById('bodyColor').value = '#FFFFFF';
+            } else {
+                darkIcon.style.display = 'none';
+                lightIcon.style.display = 'block';
+                document.getElementById('bgColor').value = '#FFFFFF';
+                document.getElementById('titleColor').value = '#000000';
+                document.getElementById('secondaryColor').value = '#64748B';
+                document.getElementById('bodyColor').value = '#000000';
+            }
+            
+            // 重置所有透明度为100%
+            document.getElementById('bgOpacity').value = 100;
+            document.getElementById('titleOpacity').value = 100;
+            document.getElementById('secondaryOpacity').value = 100;
+            document.getElementById('bodyOpacity').value = 100;
+            
+            updateColors();
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('image-preview');
+                    preview.innerHTML = `<img src="${e.target.result}" alt="Uploaded image" style="max-width: 200px; border-radius: 6px;">`;
+                    
+                    const posterImage = document.getElementById('posterImage');
+                    posterImage.classList.remove('empty');
+                    posterImage.style.backgroundImage = `url(${e.target.result})`;
+                    posterImage.style.backgroundSize = 'cover';
+                    posterImage.style.backgroundPosition = 'center';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function countChars(str) {
+            let count = 0;
+            for (let i = 0; i < str.length; i++) {
+                // 检查是否是汉字（占用2个字符）
+                if (str.charCodeAt(i) > 127 || str.charCodeAt(0) === 94) {
+                    count += 2;
+                } else {
+                    count += 1;
+                }
+            }
+            return Math.ceil(count / 2);
+        }
+
+        function updatePoster() {
+            document.getElementById('posterHeader').textContent = 
+                document.getElementById('miniHeader').value || 'Mini Header';
+            document.getElementById('posterTitle').textContent = 
+                document.getElementById('title').value || 'Your Title';
+            document.getElementById('posterBody').textContent = 
+                document.getElementById('body').value || 'Your content here';
+            document.getElementById('posterLeftFooter').textContent = 
+                document.getElementById('leftFooter').value || 'Left footer';
+            document.getElementById('posterRightFooter').textContent = 
+                document.getElementById('rightFooter').value || 'Right footer';
+        }
+
+        function hexToRgba(hex, opacity) {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+        }
+
+        function updateColors() {
+            const poster = document.querySelector('.poster');
+            const isDark = poster.classList.contains('dark');
+            
+            // 获取颜色值和透明度
+            const bgColor = document.getElementById('bgColor').value;
+            const titleColor = document.getElementById('titleColor').value;
+            const secondaryColor = document.getElementById('secondaryColor').value;
+            const bodyColor = document.getElementById('bodyColor').value;
+            
+            // 背景颜色始终使用100%不透明度
+            const bgOpacity = 1;
+            const titleOpacity = document.getElementById('titleOpacity').value / 100;
+            const secondaryOpacity = document.getElementById('secondaryOpacity').value / 100;
+            const bodyOpacity = document.getElementById('bodyOpacity').value / 100;
+            
+            // 更新透明度显示
+            document.getElementById('bgOpacityText').textContent = '100%';
+            document.getElementById('titleOpacityText').textContent = Math.round(titleOpacity * 100) + '%';
+            document.getElementById('secondaryOpacityText').textContent = Math.round(secondaryOpacity * 100) + '%';
+            document.getElementById('bodyOpacityText').textContent = Math.round(bodyOpacity * 100) + '%';
+            
+            // 更新文本输入框
+            document.getElementById('bgColorText').value = bgColor;
+            document.getElementById('titleColorText').value = titleColor;
+            document.getElementById('secondaryColorText').value = secondaryColor;
+            document.getElementById('bodyColorText').value = bodyColor;
+            
+            // 应用带透明度的颜色
+            const bgColorRgba = hexToRgba(bgColor, bgOpacity);
+            poster.style.cssText = `
+                background: ${bgColorRgba};
+                border-radius: 12px;
+                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+                padding: 0;
+                width: 450px;
+                height: 600px;
+                display: flex;
+                flex-direction: column;
+                transition: all 0.3s ease;
+                position: relative;
+            `;
+            poster.querySelector('.poster-title').style.color = hexToRgba(titleColor, titleOpacity);
+            poster.querySelector('.poster-header').style.color = hexToRgba(secondaryColor, secondaryOpacity);
+            poster.querySelector('.poster-body').style.color = hexToRgba(bodyColor, bodyOpacity);
+            poster.querySelector('.poster-footer').style.color = hexToRgba(secondaryColor, secondaryOpacity);
+        }
+
+        function updateColorFromText(elementId) {
+            const textInput = document.getElementById(elementId + 'Text');
+            const colorPicker = document.getElementById(elementId);
+            
+            // 验证颜色格式
+            const isValidColor = /^#[0-9A-F]{6}$/i.test(textInput.value);
+            if (isValidColor) {
+                colorPicker.value = textInput.value;
+                updateColors();
+            } else {
+                // 如果格式无效，恢复为颜色选择器的值
+                textInput.value = colorPicker.value;
+            }
+        }
+
+        // 初始化海报内容
+        updatePoster();
+    </script>
+</body>
+</html> 
