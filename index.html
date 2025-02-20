@@ -6,6 +6,8 @@
     <title>📕 小红书发帖模板</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/2.0.0-beta.4/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/2.0.0-beta.4/cropper.min.js"></script>
     <style>
         body {
             font-family: system-ui, -apple-system, sans-serif;
@@ -101,34 +103,36 @@
             border-radius: 12px;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
             padding: 0;
-            width: 450px;  /* 缩小预览尺寸 */
-            height: 600px;  /* 缩小预览尺寸 */
+            width: 450px;
+            height: 600px;
+            min-height: 600px;
             display: flex;
             flex-direction: column;
             transition: all 0.3s ease;
             position: relative;
             @media (max-width: 1024px) {
-                width: 270px;  /* 移动端尺寸也相应调整 */
+                width: 270px;
                 height: 360px;
+                min-height: 360px;
             }
         }
         .poster-content {
-            padding: 24px;  /* 页眉到顶部边缘的间距改为 24px */
-            height: 100%;
+            padding: 24px 24px 0 24px;
             display: flex;
             flex-direction: column;
-            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
         }
         .poster-header {
             font-size: 14px;
             color: #64748b;
-            margin-bottom: 16px;  /* Mini header 到 title 的间距改为 16px */
+            margin-bottom: 16px;
             flex-shrink: 0;
         }
         .poster-title {
             font-size: 24px;
             font-weight: 600;
-            margin-bottom: 16px;  /* title 到 image 的间距为 16px */
+            margin-bottom: 16px;
             flex-shrink: 0;
         }
         .poster-image {
@@ -136,7 +140,7 @@
             aspect-ratio: 16/9;
             object-fit: cover;
             border-radius: 8px;
-            margin-bottom: 16px;  /* image 到 body 的间距为 16px */
+            margin-bottom: 16px;
             background-color: #f8f9fa;
             flex-shrink: 0;
             display: flex;
@@ -188,20 +192,19 @@
         .poster-body {
             font-size: 16px;
             line-height: 1.6;
-            margin-bottom: 16px;  /* body 到 footer 的间距改为 16px */
-            overflow-y: auto;
+            overflow: hidden;
+            flex: 1;
+            min-height: 0;
+            max-height: calc(100% - 330px);
         }
         .poster-footer {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 24px;  /* 页脚到底部边缘的间距改为 24px */
+            padding: 24px;
             display: flex;
             justify-content: space-between;
             font-size: 14px;
             color: #64748b;
-            border-radius: 0 0 12px 12px;
+            flex-shrink: 0;
+            margin-top: auto;
         }
         /* 主题相关样式 */
         .poster.dark {
@@ -458,6 +461,9 @@
     </div>
 
     <script>
+        let cropper = null;
+        let croppedImageUrl = null;
+
         async function downloadPoster() {
             const poster = document.querySelector('.poster');
             
@@ -479,16 +485,18 @@
                 
                 // 3. 克隆海报
                 const posterClone = poster.cloneNode(true);
-                const bgColorRgba = poster.style.background || (poster.classList.contains('dark') ? '#1a1a1a' : 'white');
+                const bgColorRgba = getComputedStyle(poster).backgroundColor || (poster.classList.contains('dark') ? '#1a1a1a' : '#ffffff');
                 posterClone.style.cssText = `
                     width: 1200px;
                     height: 1600px;
                     background: ${bgColorRgba};
                     position: relative;
-                    display: block;
+                    display: flex;
+                    flex-direction: column;
                     margin: 0;
                     padding: 0;
                     border-radius: 24px;
+                    overflow: hidden;
                 `;
                 
                 container.appendChild(posterClone);
@@ -496,17 +504,19 @@
                 // 4. 调整克隆元素的样式比例
                 const content = posterClone.querySelector('.poster-content');
                 content.style.cssText = `
-                    padding: 64px;
-                    height: calc(100% - 180px);
+                    padding: 64px 64px 0 64px;
                     display: flex;
                     flex-direction: column;
+                    flex: 1;
+                    min-height: 0;
                 `;
 
                 const header = posterClone.querySelector('.poster-header');
                 header.style.cssText = `
                     font-size: 36px;
                     color: ${poster.querySelector('.poster-header').style.color || (poster.classList.contains('dark') ? '#a1a1aa' : '#64748b')};
-                    margin-bottom: 48px;
+                    margin-bottom: 36px;
+                    flex-shrink: 0;
                 `;
 
                 const title = posterClone.querySelector('.poster-title');
@@ -516,6 +526,7 @@
                     margin-bottom: 48px;
                     line-height: 1.4;
                     color: ${poster.querySelector('.poster-title').style.color || (poster.classList.contains('dark') ? 'white' : 'black')};
+                    flex-shrink: 0;
                 `;
 
                 const image = posterClone.querySelector('.poster-image');
@@ -531,22 +542,12 @@
                         border-radius: 16px;
                         margin-bottom: 48px;
                         background-color: ${poster.classList.contains('dark') ? '#2d2d2d' : '#f8f9fa'};
+                        flex-shrink: 0;
                     `;
                     
                     // 如果是空状态，确保显示占位图标
                     if (originalImage.classList.contains('empty')) {
                         image.classList.add('empty');
-                    }
-                    
-                    // 等待背景图片加载（如果有的话）
-                    if (originalImage.style.backgroundImage && !originalImage.classList.contains('empty')) {
-                        const bgUrl = originalImage.style.backgroundImage.slice(4, -1).replace(/"/g, "");
-                        await new Promise((resolve, reject) => {
-                            const img = new Image();
-                            img.onload = resolve;
-                            img.onerror = reject;
-                            img.src = bgUrl;
-                        });
                     }
                 }
 
@@ -555,40 +556,39 @@
                     font-size: 42px;
                     line-height: 1.6;
                     color: ${poster.querySelector('.poster-body').style.color || (poster.classList.contains('dark') ? 'white' : 'black')};
-                    margin-bottom: 48px;
+                    margin-bottom: 0;
+                    flex: 1;
+                    min-height: 0;
+                    overflow: hidden;
+                    height: calc(100% - 500px);
+                    padding-bottom: 10px;
                 `;
 
                 const footer = posterClone.querySelector('.poster-footer');
                 footer.style.cssText = `
-                    position: absolute;
-                    bottom: 0;
-                    left: 0;
-                    right: 0;
-                    padding: 64px;
+                    padding: 48px 64px 64px 64px;
                     display: flex;
                     justify-content: space-between;
                     font-size: 32px;
                     color: ${poster.querySelector('.poster-footer').style.color || (poster.classList.contains('dark') ? '#a1a1aa' : '#64748b')};
-                    border-radius: 0 0 24px 24px;
+                    flex-shrink: 0;
                 `;
                 
                 // 5. 使用 html2canvas，增加 scale 参数
                 const canvas = await html2canvas(posterClone, {
-                    scale: 2.67,  // 1200/450 ≈ 2.67，保持与预览版本相同的比例
+                    scale: 2,  // 恢复缩放以提高清晰度
                     useCORS: true,
                     allowTaint: false,
-                    backgroundColor: poster.classList.contains('dark') ? '#1a1a1a' : 'white',
-                    logging: true,
+                    backgroundColor: null,  // 移除这个设置，使用元素本身的背景色
+                    logging: false,
                     width: 1200,
                     height: 1600,
                     imageTimeout: 0,
                     onclone: (clonedDoc) => {
-                        console.log('克隆文档成功');
                         const clonedPoster = clonedDoc.querySelector('.poster');
-                        console.log('克隆海报尺寸:', {
-                            width: clonedPoster.offsetWidth,
-                            height: clonedPoster.offsetHeight
-                        });
+                        // 确保克隆的海报尺寸正确
+                        clonedPoster.style.width = '1200px';
+                        clonedPoster.style.height = '1600px';
                     }
                 });
                 
@@ -682,22 +682,105 @@
             updateColors();
         }
 
-        function handleImageUpload(event) {
+        async function handleImageUpload(event) {
             const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
+                    // 创建一个临时图片来获取原始尺寸
+                    const img = new Image();
+                    img.onload = function() {
+                        // 创建 canvas 进行裁剪
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+
+                        // 设置目标尺寸（16:9）
+                        canvas.width = 1600;
+                        canvas.height = 900;
+
+                        // 计算裁剪参数
+                        const targetRatio = 16 / 9;
+                        const imgRatio = img.width / img.height;
+                        
+                        let sx, sy, sWidth, sHeight;
+                        
+                        if (imgRatio > targetRatio) {
+                            // 图片太宽，需要裁剪两边
+                            sHeight = img.height;
+                            sWidth = img.height * targetRatio;
+                            sx = (img.width - sWidth) / 2;
+                            sy = 0;
+                        } else {
+                            // 图片太高，需要裁剪上下
+                            sWidth = img.width;
+                            sHeight = img.width / targetRatio;
+                            sx = 0;
+                            sy = (img.height - sHeight) / 2;
+                        }
+
+                        // 绘制裁剪后的图片
+                        ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+
+                        // 转换为高质量 JPEG
+                        const croppedImageUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+                        // 更新预览
                     const preview = document.getElementById('image-preview');
-                    preview.innerHTML = `<img src="${e.target.result}" alt="Uploaded image" style="max-width: 200px; border-radius: 6px;">`;
-                    
-                    const posterImage = document.getElementById('posterImage');
-                    posterImage.classList.remove('empty');
-                    posterImage.style.backgroundImage = `url(${e.target.result})`;
-                    posterImage.style.backgroundSize = 'cover';
-                    posterImage.style.backgroundPosition = 'center';
-                }
+                        preview.innerHTML = `<img src="${croppedImageUrl}" alt="Uploaded image" style="max-width: 200px; border-radius: 6px;">`;
+                        
+                        // 更新海报图片
+                        const posterImage = document.getElementById('posterImage');
+                        posterImage.classList.remove('empty');
+                        posterImage.style.backgroundImage = `url(${croppedImageUrl})`;
+                        posterImage.style.backgroundSize = 'cover';
+                        posterImage.style.backgroundPosition = 'center';
+                    };
+                    img.src = e.target.result;
+                };
                 reader.readAsDataURL(file);
             }
+        }
+
+        function closeCropperModal() {
+            const modal = document.getElementById('cropperModal');
+            modal.classList.add('hidden');
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            // 如果没有已裁剪的图片，清空文件输入
+            if (!croppedImageUrl) {
+                document.getElementById('image-upload').value = '';
+            }
+        }
+
+        function cropImage() {
+            if (!cropper) return;
+
+            // 获取裁剪后的图片数据
+            const canvas = cropper.getCroppedCanvas({
+                width: 1600,    // 16:9 比例的宽度
+                height: 900,    // 16:9 比例的高度
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+
+            // 转换为 base64
+            croppedImageUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+            // 更新预览
+            const preview = document.getElementById('image-preview');
+            preview.innerHTML = `<img src="${croppedImageUrl}" alt="Uploaded image" style="max-width: 200px; border-radius: 6px;">`;
+            
+            // 更新海报图片
+            const posterImage = document.getElementById('posterImage');
+            posterImage.classList.remove('empty');
+            posterImage.style.backgroundImage = `url(${croppedImageUrl})`;
+            posterImage.style.backgroundSize = 'cover';
+            posterImage.style.backgroundPosition = 'center';
+
+            // 关闭对话框
+            closeCropperModal();
         }
 
         function countChars(str) {
@@ -765,39 +848,8 @@
             const bgColorRgba = hexToRgba(bgColor, bgOpacity);
             poster.style.cssText = `
                 background: ${bgColorRgba};
-                border-radius: 12px;
-                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-                padding: 0;
-                width: 450px;
-                height: 600px;
-                display: flex;
-                flex-direction: column;
-                transition: all 0.3s ease;
-                position: relative;
             `;
-            poster.querySelector('.poster-title').style.color = hexToRgba(titleColor, titleOpacity);
-            poster.querySelector('.poster-header').style.color = hexToRgba(secondaryColor, secondaryOpacity);
-            poster.querySelector('.poster-body').style.color = hexToRgba(bodyColor, bodyOpacity);
-            poster.querySelector('.poster-footer').style.color = hexToRgba(secondaryColor, secondaryOpacity);
         }
-
-        function updateColorFromText(elementId) {
-            const textInput = document.getElementById(elementId + 'Text');
-            const colorPicker = document.getElementById(elementId);
-            
-            // 验证颜色格式
-            const isValidColor = /^#[0-9A-F]{6}$/i.test(textInput.value);
-            if (isValidColor) {
-                colorPicker.value = textInput.value;
-                updateColors();
-            } else {
-                // 如果格式无效，恢复为颜色选择器的值
-                textInput.value = colorPicker.value;
-            }
-        }
-
-        // 初始化海报内容
-        updatePoster();
     </script>
 </body>
-</html> 
+</html>
