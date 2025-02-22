@@ -196,6 +196,7 @@
             flex: 1;
             min-height: 0;
             max-height: calc(100% - 330px);
+            white-space: pre-line;  /* 保持换行 */
         }
         .poster-footer {
             padding: 24px;
@@ -562,6 +563,7 @@
                     overflow: hidden;
                     height: calc(100% - 330px);
                     padding-bottom: 10px;
+                    white-space: pre-line;
                 `;
 
                 const footer = posterClone.querySelector('.poster-footer');
@@ -801,8 +803,11 @@
                 document.getElementById('miniHeader').value || 'Mini Header';
             document.getElementById('posterTitle').textContent = 
                 document.getElementById('title').value || 'Your Title';
-            document.getElementById('posterBody').textContent = 
-                document.getElementById('body').value || 'Your content here';
+            
+            // 保持换行格式
+            const bodyText = document.getElementById('body').value || 'Your content here';
+            document.getElementById('posterBody').textContent = bodyText;
+            
             document.getElementById('posterLeftFooter').textContent = 
                 document.getElementById('leftFooter').value || 'Left footer';
             document.getElementById('posterRightFooter').textContent = 
@@ -859,6 +864,24 @@
             poster.querySelector('.poster-header').style.color = secondaryColorRgba;
             poster.querySelector('.poster-footer').style.color = secondaryColorRgba;
         }
+
+        function updateColorFromText(colorId) {
+            // 获取文本输入框的值
+            const textInput = document.getElementById(colorId + 'Text');
+            const colorInput = document.getElementById(colorId);
+            let colorValue = textInput.value.trim();
+            
+            // 确保颜色值是有效的十六进制格式
+            if (!colorValue.startsWith('#')) {
+                colorValue = '#' + colorValue;
+            }
+            if (/^#[0-9A-Fa-f]{6}$/.test(colorValue)) {
+                // 更新颜色选择器的值
+                colorInput.value = colorValue;
+                // 应用颜色更新
+                updateColors();
+            }
+        }
     </script>
 </body>
-</html>
+</html> 
