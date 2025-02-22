@@ -382,7 +382,7 @@
                             <label class="settings-sublabel">Background Color</label>
                             <div class="flex items-center space-x-2">
                                 <input type="color" id="bgColor" class="color-picker" value="#FFFFFF" onchange="updateColors()">
-                                <input type="text" class="input w-24" id="bgColorText" value="#FFFFFF" onchange="updateColorFromText('bgColor')">
+                                <input type="text" class="input w-24" id="bgColorText" value="#FFFFFF" oninput="updateColorFromText('bgColor')" onchange="updateColorFromText('bgColor')">
                                 <div class="flex items-center space-x-1">
                                     <input type="range" min="0" max="100" value="100" class="opacity-slider" id="bgOpacity" oninput="updateColors()" disabled style="opacity: 0.5; cursor: not-allowed;">
                                     <span class="text-xs text-gray-500" id="bgOpacityText">100%</span>
@@ -393,7 +393,7 @@
                             <label class="settings-sublabel">Title Color</label>
                             <div class="flex items-center space-x-2">
                                 <input type="color" id="titleColor" class="color-picker" value="#000000" onchange="updateColors()">
-                                <input type="text" class="input w-24" id="titleColorText" value="#000000" onchange="updateColorFromText('titleColor')">
+                                <input type="text" class="input w-24" id="titleColorText" value="#000000" oninput="updateColorFromText('titleColor')" onchange="updateColorFromText('titleColor')">
                                 <div class="flex items-center space-x-1">
                                     <input type="range" min="0" max="100" value="100" class="opacity-slider" id="titleOpacity" oninput="updateColors()">
                                     <span class="text-xs text-gray-500" id="titleOpacityText">100%</span>
@@ -404,7 +404,7 @@
                             <label class="settings-sublabel">Body Color</label>
                             <div class="flex items-center space-x-2">
                                 <input type="color" id="bodyColor" class="color-picker" value="#000000" onchange="updateColors()">
-                                <input type="text" class="input w-24" id="bodyColorText" value="#000000" onchange="updateColorFromText('bodyColor')">
+                                <input type="text" class="input w-24" id="bodyColorText" value="#000000" oninput="updateColorFromText('bodyColor')" onchange="updateColorFromText('bodyColor')">
                                 <div class="flex items-center space-x-1">
                                     <input type="range" min="0" max="100" value="100" class="opacity-slider" id="bodyOpacity" oninput="updateColors()">
                                     <span class="text-xs text-gray-500" id="bodyOpacityText">100%</span>
@@ -415,7 +415,7 @@
                             <label class="settings-sublabel">Header & Footer Color</label>
                             <div class="flex items-center space-x-2">
                                 <input type="color" id="secondaryColor" class="color-picker" value="#64748B" onchange="updateColors()">
-                                <input type="text" class="input w-24" id="secondaryColorText" value="#64748B" onchange="updateColorFromText('secondaryColor')">
+                                <input type="text" class="input w-24" id="secondaryColorText" value="#64748B" oninput="updateColorFromText('secondaryColor')" onchange="updateColorFromText('secondaryColor')">
                                 <div class="flex items-center space-x-1">
                                     <input type="range" min="0" max="100" value="100" class="opacity-slider" id="secondaryOpacity" oninput="updateColors()">
                                     <span class="text-xs text-gray-500" id="secondaryOpacityText">100%</span>
