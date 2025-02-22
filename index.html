@@ -376,7 +376,7 @@
 
                 <div class="space-y-4">
                     <h2 class="settings-label">Color Settings</h2>
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="space-y-2">
                             <label class="settings-sublabel">Background Color</label>
                             <div class="flex items-center space-x-2">
@@ -560,7 +560,7 @@
                     flex: 1;
                     min-height: 0;
                     overflow: hidden;
-                    height: calc(100% - 500px);
+                    height: calc(100% - 330px);
                     padding-bottom: 10px;
                 `;
 
@@ -846,9 +846,18 @@
             
             // 应用带透明度的颜色
             const bgColorRgba = hexToRgba(bgColor, bgOpacity);
-            poster.style.cssText = `
-                background: ${bgColorRgba};
-            `;
+            const titleColorRgba = hexToRgba(titleColor, titleOpacity);
+            const secondaryColorRgba = hexToRgba(secondaryColor, secondaryOpacity);
+            const bodyColorRgba = hexToRgba(bodyColor, bodyOpacity);
+
+            // 应用颜色到各个元素
+            poster.style.background = bgColorRgba;
+            poster.querySelector('.poster-title').style.color = titleColorRgba;
+            poster.querySelector('.poster-body').style.color = bodyColorRgba;
+            
+            // 应用次要颜色到header和footer
+            poster.querySelector('.poster-header').style.color = secondaryColorRgba;
+            poster.querySelector('.poster-footer').style.color = secondaryColorRgba;
         }
     </script>
 </body>
